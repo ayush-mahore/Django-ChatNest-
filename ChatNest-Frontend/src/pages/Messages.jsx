@@ -28,7 +28,7 @@ const Messages = ({ roomName, user }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     let token = localStorage.getItem("access");
     if (!token) {
       alert("You must be logged in to enter a room.");
@@ -41,7 +41,7 @@ const Messages = ({ roomName, user }) => {
 
     try {
       const response = await chatnestApi.get(
-        `/auth/group/${roomName}/${username}/`,
+        `/group/${roomName}/${username}/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -50,10 +50,10 @@ const Messages = ({ roomName, user }) => {
       );
 
       if (response.status === 200) {
+        // Navigate to the chat room with messages
         navigate(`/enter-room/${roomName}`, {
           state: { messages: response.data.messages },
         });
-        console.log("Coorect");
       } else {
         throw new Error("Something went wrong.");
       }

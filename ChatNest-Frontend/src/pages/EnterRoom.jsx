@@ -38,8 +38,8 @@ const EnterRoom = () => {
     const username = formData.get("username");
 
     try {
-      const response = await chatnestApi.post(
-        `/auth/group/${roomName}/${username}/`,
+      const response = await chatnestApi.get(
+        `/group/${roomName}/${username}/`,
         formData,
         {
           headers: {
@@ -71,7 +71,7 @@ const EnterRoom = () => {
         <h1>Enter Room</h1>
         <form
           id="enterRoomForm"
-          action="/auth/group/"
+          action="/group/"
           method="POST"
           onSubmit={handleSubmit}
         >
