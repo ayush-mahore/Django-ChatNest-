@@ -2,13 +2,14 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import chatnestApi from "../chatnest_api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { jwtDecode } from "jwt-decode";
 import "../styles/EnterRoom.css";
 
 const EnterRoom = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let token = localStorage.getItem("access");
+    const token = localStorage.getItem("access");
     if (!token) {
       navigate("/login");
     }
@@ -24,29 +25,27 @@ const EnterRoom = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    let token = localStorage.getItem("access");
+    const token = localStorage.getItem("access");
     if (!token) {
       alert("You must be logged in to enter a room.");
       return;
     }
 
-    let form = event.target;
-    let formData = new FormData(form);
+    const form = event.target;
+    const formData = new FormData(form);
     formData.append("csrfmiddlewaretoken", getCsrfToken());
 
     const roomName = formData.get("room");
-    const username = formData.get("username");
+    const decodedToken = jwtDecode(token);
+    const userId = decodedToken.user_id;
 
     try {
-      const response = await chatnestApi.get(
-        `/group/${roomName}/${username}/`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await chatnestApi.get(`/group/${roomName}/${userId}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.status === 200) {
         navigate(`/enter-room/${roomName}`);
@@ -75,10 +74,6 @@ const EnterRoom = () => {
           method="POST"
           onSubmit={handleSubmit}
         >
-          <label htmlFor="username">Username</label>
-          <br />
-          <input type="text" placeholder="Username" name="username" required />
-          <br />
           <label htmlFor="room">Room name</label>
           <br />
           <input type="text" placeholder="Room name" name="room" required />

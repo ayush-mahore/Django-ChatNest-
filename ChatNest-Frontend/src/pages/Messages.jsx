@@ -1,65 +1,86 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import chatnestApi from "../chatnest_api";
 import "../styles/Messages.css";
 
-const Messages = ({ roomName, user }) => {
+const Messages = () => {
+  const { roomName } = useParams(); // Corrected here
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const API_Location = import.meta.env.VITE_APP_URL;
+  const user = localStorage.getItem("username");
 
   useEffect(() => {
-    const websocketProtocol =
-      window.location.protocol === "https:" ? "wss" : "ws";
-    const wsEndpoint = `${websocketProtocol}://${window.location.host}/ws/notification/${roomName}/`;
-    const socket = new WebSocket(wsEndpoint);
+    let socket;
 
-    socket.onopen = () => console.log("WebSocket connection opened!");
-    socket.onclose = () => console.log("WebSocket connection closed!");
+    try {
+      const websocketProtocol =
+        window.location.protocol === "https:" ? "wss" : "ws";
+      const wsEndpoint = `${websocketProtocol}://${API_Location.replace(
+        /^http/,
+        "ws"
+      )}/ws/notification/${roomName}/`;
+      socket = new WebSocket(wsEndpoint);
 
-    socket.addEventListener("message", (event) => {
-      const messageData = JSON.parse(event.data).message;
-      setMessages((prevMessages) => [...prevMessages, messageData]);
-      if (messageData.sender === user) {
-        setMessage("");
+      socket.onopen = () => console.log("WebSocket connection opened!");
+      socket.onclose = () => console.log("WebSocket connection closed!");
+
+      socket.addEventListener("message", (event) => {
+        const messageData = JSON.parse(event.data).message;
+        if (messageData) {
+          setMessages((prevMessages) => [...prevMessages, messageData]);
+          if (messageData.sender === user) {
+            setMessage("");
+          }
+          scrollToBottom();
+        }
+      });
+
+      socket.onerror = (error) => {
+        console.error("WebSocket Error: ", error);
+      };
+    } catch (error) {
+      console.error("WebSocket setup error: ", error);
+    }
+
+    return () => {
+      if (socket) {
+        socket.close();
       }
-      scrollToBottom();
-    });
-
-    return () => socket.close();
+    };
   }, [roomName, user]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
-    let token = localStorage.getItem("access");
+    const token = localStorage.getItem("access");
+
     if (!token) {
-      alert("You must be logged in to enter a room.");
+      alert("You must be logged in to send messages.");
       return;
     }
 
-    let form = event.target;
-    let roomName = form.room.value;
-    let username = form.username.value;
-
     try {
-      const response = await chatnestApi.get(
-        `/group/${roomName}/${username}/`,
+      await chatnestApi.post(
+        `/messages/`,
+        { roomName, message },
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
-
-      if (response.status === 200) {
-        // Navigate to the chat room with messages
-        navigate(`/enter-room/${roomName}`, {
-          state: { messages: response.data.messages },
-        });
-      } else {
-        throw new Error("Something went wrong.");
-      }
+      setMessage("");
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to enter the room. Please try again.");
+      alert("Failed to send the message. Please try again.");
+    }
+  };
+
+  const scrollToBottom = () => {
+    const chatContainer = document.getElementById("chatContainer");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   };
 
@@ -73,21 +94,17 @@ const Messages = ({ roomName, user }) => {
         <div className="msg-chat-body-parent">
           <div className="msg-chat-body">
             <div className="msg-message" id="chatContainer">
-              {/* Received messages */}
-              {messages.map((msg, index) =>
-                msg.sender !== user ? (
-                  <div className="msg-receive" key={index}>
-                    <p style={{ color: "#000" }}>
-                      {msg.message} <strong>-{msg.sender}</strong>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="msg-send" key={index}>
-                    <p style={{ color: "#000" }}>{msg.message}</p>
-                  </div>
-                )
-              )}
-              {/* End of received messages */}
+              {messages.map((msg, index) => (
+                <div
+                  className={`msg-${msg.sender === user ? "send" : "receive"}`}
+                  key={index}
+                >
+                  <p style={{ color: "#000" }}>
+                    {msg.message}
+                    {msg.sender !== user && <strong>-{msg.sender}</strong>}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div className="msg-form">

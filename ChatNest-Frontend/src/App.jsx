@@ -33,7 +33,7 @@ function App() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />
         <Route path="/enter-room" element={<EnterRoom />} />
-        <Route path="/enter-room/:room-name" element={<Messages />} />
+        <Route path="/enter-room/:roomName" element={<Messages />} />
         <Route path="*" element={<NotFound />}></Route>
       </Routes>
     </BrowserRouter>
