@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ACCESS_TOKEN, UserName } from "../constants";
 import axios from "axios";
 import "../styles/Messages.css";
 
@@ -8,46 +9,27 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [socket, setSocket] = useState(null);
-  const [username, setUsername] = useState("");
+  const username = localStorage.getItem(UserName);
   const API_Location = import.meta.env.VITE_APP_URL;
 
   useEffect(() => {
-    const fetchUsername = async () => {
-      try {
-        const token = localStorage.getItem("access_token");
-        const decodedToken = JSON.parse(atob(token.split(".")[1]));
-        const userId = decodedToken.user_id;
-
-        const response = await axios.get(
-          `auth/user/${API_Location}/username/${userId}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setUsername(response.data.username);
-        console.log(username);
-      } catch (error) {
-        console.error("Error fetching username: ", error);
-      }
-    };
-
     const fetchMessages = async () => {
       try {
         const response = await axios.get(
-          `${API_Location}/group/${roomName}/messages/`,
+          `${API_Location}/group/${roomName}/${username}/`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+              Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
             },
           }
         );
+        console.log(response);
         setMessages(response.data.messages);
       } catch (error) {
         console.error("Error fetching messages: ", error);
       }
     };
 
-    fetchUsername();
     fetchMessages();
 
     const websocketProtocol =
@@ -81,7 +63,7 @@ const Messages = () => {
         newSocket.close();
       }
     };
-  }, [roomName, username]);
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -124,9 +106,9 @@ const Messages = () => {
                   key={index}
                 >
                   <p style={{ color: "#000" }}>
-                    {msg.message}
-                    {msg.sender !== username && <strong>-{msg.sender}</strong>}
+                    <strong>{msg.message}</strong>
                   </p>
+                  <h5 className="msg-sender-msg">{msg.sender}</h5>
                 </div>
               ))}
             </div>

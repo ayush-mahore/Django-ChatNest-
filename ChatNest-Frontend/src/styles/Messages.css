@@ -33,19 +33,23 @@
   .msg-chat-body-parent {
     display: flex;
     flex-direction: column;
-        height: 400px;
-        overflow: hidden;
-    }
+    height: 400px;
+    overflow: auto;
+  }
+
   .msg-chat-body {
-      flex: 1;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;}
+    justify-content: space-between;
+  }
+
 .msg-message {
-    flex: 1;
-        padding: 20px;
-    overflow-y: auto;
-    background-color: #fafafa;}
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #fafafa;
+}
     
         .msg-message div {
             margin-bottom: 10px;}
@@ -69,6 +73,7 @@
         margin: 0;
         word-wrap: break-word;
     }
+
 
   .msg-form {
       background-color: #fff;

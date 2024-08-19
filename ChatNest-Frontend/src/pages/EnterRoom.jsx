@@ -55,7 +55,6 @@ const EnterRoom = () => {
         throw new Error("Something went wrong.");
       }
     } catch (error) {
-      console.error("Error:", error);
       alert("Failed to enter the room. Please try again.");
     }
   };
