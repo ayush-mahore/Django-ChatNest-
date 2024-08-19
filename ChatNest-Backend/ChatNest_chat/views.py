@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Room, Message
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def CreateRoom(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -17,6 +21,8 @@ def CreateRoom(request):
     return render(request, 'index.html')
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def MessageView(request, room_name, username):
     get_room = Room.objects.get(room_name=room_name)
     get_messages = Message.objects.filter(room=get_room)

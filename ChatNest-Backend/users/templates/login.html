@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" required><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" required><br>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            let formData = new FormData(event.target);
+            let loginData = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+
+            fetch('/api/token/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(loginData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.access) {
+                        localStorage.setItem('access', data.access);
+                        localStorage.setItem('refresh', data.refresh);
+                        window.location.href = '/enter-room/';  // Redirect to the chat entry page
+                    } else {
+                        alert('Login failed, please try again.');
+                    }
+                });
+        });
+    </script>
+</body>
+
+</html>

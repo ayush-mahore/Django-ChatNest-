@@ -10,16 +10,63 @@
     <div class="parent">
         <div class="child">
             <h1>Enter Room</h1>
-            <form action="" method="POST">
+            <form id="enterRoomForm" action="" method="POST">
                 {% csrf_token %}
-                <label for="">Username</label><br>
+                <label for="username">Username</label><br>
                 <input type="text" placeholder="Username" name="username" required><br>
-                <label for="">Room name</label><br>
-                <input type="text" placeholder="room name" name="room" required><br>
+                <label for="room">Room name</label><br>
+                <input type="text" placeholder="Room name" name="room" required><br>
                 <center><button type="submit">Submit</button></center><br>
             </form>
         </div>
     </div>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let token = localStorage.getItem('access');
+            if (!token) {
+                window.location.href = '/login/';  // Redirect to login page if no token
+            }
+        });
+
+        document.getElementById('enterRoomForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            let token = localStorage.getItem('access');
+            if (!token) {
+                alert('You must be logged in to enter a room.');
+                return;
+            }
+
+            let form = event.target;
+            let formData = new FormData(form);
+            let headers = new Headers({
+                'Authorization': `Bearer ${token}`,
+                'X-CSRFToken': '{{ csrf_token }}'
+            });
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Something went wrong.');
+                    }
+                })
+                .then(data => {
+                    // Handle success (e.g., redirect to chat room)
+                    window.location.href = `/chat/${formData.get('room')}/${formData.get('username')}/`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to enter the room. Please try again.');
+                });
+        });
+    </script>
+
 </body>
 <style>
 
