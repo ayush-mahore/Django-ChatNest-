@@ -2,14 +2,14 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import chatnestApi from "../chatnest_api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
-import { jwtDecode } from "jwt-decode";
 import "../styles/EnterRoom.css";
+import { jwtDecode } from "jwt-decode";
 
 const EnterRoom = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("access");
+    let token = localStorage.getItem("access");
     if (!token) {
       navigate("/login");
     }
@@ -36,16 +36,18 @@ const EnterRoom = () => {
     formData.append("csrfmiddlewaretoken", getCsrfToken());
 
     const roomName = formData.get("room");
-    const decodedToken = jwtDecode(token);
-    const userId = decodedToken.user_id;
+    const username = localStorage.getItem("username");
 
     try {
-      const response = await chatnestApi.get(`/group/${roomName}/${userId}/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await chatnestApi.get(
+        `/group/${roomName}/${username}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 200) {
         navigate(`/enter-room/${roomName}`);

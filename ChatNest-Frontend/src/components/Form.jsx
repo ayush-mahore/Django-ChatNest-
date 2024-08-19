@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import chatnestApi from "../chatnest_api";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { ACCESS_TOKEN, REFRESH_TOKEN, UserName } from "../constants";
 import "../styles/Form.css";
 import LoadingIndicator from "./LoadingIndicator";
 
@@ -31,6 +31,7 @@ function Form({ route, method }) {
       if (method === "login") {
         localStorage.setItem(ACCESS_TOKEN, res?.data?.access);
         localStorage.setItem(REFRESH_TOKEN, res?.data?.refresh);
+        localStorage.setItem(UserName, username);
         navigate("/enter-room");
       } else {
         navigate("/login");

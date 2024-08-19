@@ -1,79 +1,101 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import chatnestApi from "../chatnest_api";
+import axios from "axios";
 import "../styles/Messages.css";
 
 const Messages = () => {
-  const { roomName } = useParams(); // Corrected here
+  const { roomName } = useParams();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const [socket, setSocket] = useState(null);
+  const [username, setUsername] = useState("");
   const API_Location = import.meta.env.VITE_APP_URL;
-  const user = localStorage.getItem("username");
 
   useEffect(() => {
-    let socket;
+    const fetchUsername = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const userId = decodedToken.user_id;
 
-    try {
-      const websocketProtocol =
-        window.location.protocol === "https:" ? "wss" : "ws";
-      const wsEndpoint = `${websocketProtocol}://${API_Location.replace(
-        /^http/,
-        "ws"
-      )}/ws/notification/${roomName}/`;
-      socket = new WebSocket(wsEndpoint);
-
-      socket.onopen = () => console.log("WebSocket connection opened!");
-      socket.onclose = () => console.log("WebSocket connection closed!");
-
-      socket.addEventListener("message", (event) => {
-        const messageData = JSON.parse(event.data).message;
-        if (messageData) {
-          setMessages((prevMessages) => [...prevMessages, messageData]);
-          if (messageData.sender === user) {
-            setMessage("");
+        const response = await axios.get(
+          `auth/user/${API_Location}/username/${userId}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
           }
-          scrollToBottom();
-        }
-      });
-
-      socket.onerror = (error) => {
-        console.error("WebSocket Error: ", error);
-      };
-    } catch (error) {
-      console.error("WebSocket setup error: ", error);
-    }
-
-    return () => {
-      if (socket) {
-        socket.close();
+        );
+        setUsername(response.data.username);
+        console.log(username);
+      } catch (error) {
+        console.error("Error fetching username: ", error);
       }
     };
-  }, [roomName, user]);
+
+    const fetchMessages = async () => {
+      try {
+        const response = await axios.get(
+          `${API_Location}/group/${roomName}/messages/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
+          }
+        );
+        setMessages(response.data.messages);
+      } catch (error) {
+        console.error("Error fetching messages: ", error);
+      }
+    };
+
+    fetchUsername();
+    fetchMessages();
+
+    const websocketProtocol =
+      window.location.protocol === "https:" ? "wss" : "ws";
+    const wsEndpoint = `${websocketProtocol}://${
+      API_Location.split("://")[1]
+    }/ws/notification/${roomName}/`;
+
+    const newSocket = new WebSocket(wsEndpoint);
+
+    newSocket.onopen = () => console.log("WebSocket connection opened!");
+    newSocket.onclose = () => console.log("WebSocket connection closed!");
+
+    newSocket.addEventListener("message", (event) => {
+      const messageData = JSON.parse(event.data).message;
+      if (messageData) {
+        setMessages((prevMessages) => [...prevMessages, messageData]);
+        if (messageData.sender === username) {
+          setMessage("");
+        }
+        scrollToBottom();
+      }
+    });
+
+    newSocket.onerror = (error) => console.error("WebSocket Error: ", error);
+
+    setSocket(newSocket);
+
+    return () => {
+      if (newSocket) {
+        newSocket.close();
+      }
+    };
+  }, [roomName, username]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const token = localStorage.getItem("access");
+    if (socket && message) {
+      const messageData = JSON.stringify({
+        room_name: roomName,
+        message: message,
+        sender: username,
+      });
 
-    if (!token) {
-      alert("You must be logged in to send messages.");
-      return;
-    }
-
-    try {
-      await chatnestApi.post(
-        `/messages/`,
-        { roomName, message },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      socket.send(messageData);
       setMessage("");
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to send the message. Please try again.");
+    } else {
+      console.error("Socket is not connected or message is empty.");
     }
   };
 
@@ -96,12 +118,14 @@ const Messages = () => {
             <div className="msg-message" id="chatContainer">
               {messages.map((msg, index) => (
                 <div
-                  className={`msg-${msg.sender === user ? "send" : "receive"}`}
+                  className={`msg-${
+                    msg.sender === username ? "send" : "receive"
+                  }`}
                   key={index}
                 >
                   <p style={{ color: "#000" }}>
                     {msg.message}
-                    {msg.sender !== user && <strong>-{msg.sender}</strong>}
+                    {msg.sender !== username && <strong>-{msg.sender}</strong>}
                   </p>
                 </div>
               ))}
