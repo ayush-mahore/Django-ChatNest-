@@ -14,6 +14,13 @@ const EnterRoom = () => {
     }
   }, [navigate]);
 
+  const getCsrfToken = () => {
+    return document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -25,17 +32,24 @@ const EnterRoom = () => {
 
     let form = event.target;
     let formData = new FormData(form);
+    formData.append("csrfmiddlewaretoken", getCsrfToken());
+
+    const roomName = formData.get("room");
+    const username = formData.get("username");
 
     try {
-      const response = await chatnestApi.post(form.action, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-        },
-      });
+      const response = await chatnestApi.post(
+        `/auth/group/${roomName}/${username}/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       if (response.status === 200) {
-        navigate(`/chat/${formData.get("room")}/${formData.get("username")}`);
+        navigate(`/enter-room/${roomName}`);
       } else {
         throw new Error("Something went wrong.");
       }
@@ -61,11 +75,6 @@ const EnterRoom = () => {
           method="POST"
           onSubmit={handleSubmit}
         >
-          <input
-            type="hidden"
-            name="csrfmiddlewaretoken"
-            value="{{ csrf_token }}"
-          />
           <label htmlFor="username">Username</label>
           <br />
           <input type="text" placeholder="Username" name="username" required />

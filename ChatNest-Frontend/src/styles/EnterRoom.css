@@ -46,6 +46,9 @@ button {
     width: 20%;
 }
 
+.logout-button {
+    background-color: red;
+}
 button:hover {
     padding: 15px;
     transition: 0.8s;

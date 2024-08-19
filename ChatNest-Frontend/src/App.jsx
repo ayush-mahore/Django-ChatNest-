@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import EnterRoom from "./pages/EnterRoom";
+import Messages from "./pages/Messages";
 
 function Logout() {
   localStorage.clear();
@@ -31,6 +32,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/register" element={<RegisterAndLogout />} />
+        <Route path="/enter-room" element={<EnterRoom />} />
+        <Route path="/enter-room/:room-name" element={<Messages />} />
         <Route path="*" element={<NotFound />}></Route>
       </Routes>
     </BrowserRouter>
