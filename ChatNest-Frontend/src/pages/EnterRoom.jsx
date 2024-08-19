@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import chatnestApi from "../chatnest_api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import "../styles/EnterRoom.css";
 
 const EnterRoom = () => {
@@ -12,8 +14,9 @@ const EnterRoom = () => {
     }
   }, [navigate]);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
     let token = localStorage.getItem("access");
     if (!token) {
       alert("You must be logged in to enter a room.");
@@ -22,31 +25,30 @@ const EnterRoom = () => {
 
     let form = event.target;
     let formData = new FormData(form);
-    let headers = new Headers({
-      Authorization: `Bearer ${token}`,
-      "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
-    });
 
-    fetch(form.action, {
-      method: "POST",
-      headers: headers,
-      body: formData,
-    })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error("Something went wrong.");
-        }
-      })
-      .then((data) => {
-        // Handle success (e.g., redirect to chat room)
-        navigate(`/chat/${formData.get("room")}/${formData.get("username")}`);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("Failed to enter the room. Please try again.");
+    try {
+      const response = await chatnestApi.post(form.action, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+        },
       });
+
+      if (response.status === 200) {
+        navigate(`/chat/${formData.get("room")}/${formData.get("username")}`);
+      } else {
+        throw new Error("Something went wrong.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to enter the room. Please try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
+    navigate("/login");
   };
 
   return (
@@ -55,7 +57,7 @@ const EnterRoom = () => {
         <h1>Enter Room</h1>
         <form
           id="enterRoomForm"
-          action=""
+          action="/auth/group/"
           method="POST"
           onSubmit={handleSubmit}
         >
@@ -77,6 +79,9 @@ const EnterRoom = () => {
           </center>
           <br />
         </form>
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </div>
   );
