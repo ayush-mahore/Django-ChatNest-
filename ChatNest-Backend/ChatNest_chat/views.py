@@ -7,19 +7,16 @@ from rest_framework import status
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def CreateRoom(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        room = request.POST['room']
-        try:
-            get_room = Room.objects.get(room_name=room)
-        except Room.DoesNotExist:
-            new_room = Room(room_name=room)
-            new_room.save()
+def create_or_get_room(request):
+    room_name = request.data.get('room')
+    username = request.data.get('username')
 
-        return redirect('room', room_name=room, username=username)
+    if not room_name or not username:
+        return Response({"error": "Room name and username are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    return render(request, 'index.html')
+    room, created = Room.objects.get_or_create(room_name=room_name)
+
+    return Response({"room_name": room.room_name, "created": created}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

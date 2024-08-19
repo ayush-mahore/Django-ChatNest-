@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import chatnestApi from "../chatnest_api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import "../styles/EnterRoom.css";
-import { jwtDecode } from "jwt-decode";
 
 const EnterRoom = () => {
   const navigate = useNavigate();
@@ -39,8 +38,10 @@ const EnterRoom = () => {
     const username = localStorage.getItem("username");
 
     try {
-      const response = await chatnestApi.get(
-        `/group/${roomName}/${username}/`,
+      // Send a request to create or get the room
+      const response = await chatnestApi.post(
+        `/group/`,
+        { room: roomName, username: username },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,12 +70,7 @@ const EnterRoom = () => {
     <div className="parent">
       <div className="child">
         <h1>Enter Room</h1>
-        <form
-          id="enterRoomForm"
-          action="/group/"
-          method="POST"
-          onSubmit={handleSubmit}
-        >
+        <form id="enterRoomForm" onSubmit={handleSubmit}>
           <label htmlFor="room">Room name</label>
           <br />
           <input type="text" placeholder="Room name" name="room" required />
