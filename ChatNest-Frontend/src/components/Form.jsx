@@ -34,7 +34,7 @@ function Form({ route, method }) {
         localStorage.setItem(UserName, username);
         navigate("/enter-room");
       } else {
-        navigate("/login");
+        navigate("/");
       }
     } catch (error) {
       if (error.response && error.response.status === 401) {

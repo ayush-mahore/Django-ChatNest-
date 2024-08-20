@@ -3,8 +3,6 @@ import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constants";
 
 const chatnestApi = axios.create({
   baseURL: import.meta.env.VITE_APP_URL,
-  // ? import.meta.env.VITE_APP_URL
-  // : backendUrl,
 });
 
 chatnestApi.interceptors.request.use(

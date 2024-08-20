@@ -10,7 +10,7 @@ const EnterRoom = () => {
   useEffect(() => {
     let token = localStorage.getItem("access");
     if (!token) {
-      navigate("/login");
+      navigate("/");
     }
   }, [navigate]);
 
@@ -61,9 +61,8 @@ const EnterRoom = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
-    navigate("/login");
+    localStorage.clear();
+    navigate("/");
   };
 
   return (
